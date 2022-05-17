@@ -1,10 +1,6 @@
 #!/usr/bin/env xonsh
 import argparse
-
-from tests.mongodb.test_main import *
-from tests.rethink.test_main import *
-from tests.tidb.test_main import *
-from tests.copilot.test_main import *
+from tests.rocksdb.test_main import *
 
 def parse_opt():
     parser = argparse.ArgumentParser()
@@ -24,29 +20,12 @@ def parse_opt():
     return opt
 
 def main(opt):
-    if opt.cleanup:
-        if opt.system == "mongodb":
-            DB = MongoDB(opt=opt)
-        elif opt.system == "rethinkdb":
-            DB = RethinkDB(opt=opt)
-        elif opt.system == "tidb":
-            DB = TiDB(opt=opt)
-        elif opt.system == "copilot":
-            DB = Copilot(opt=opt)
-        DB.cleanup()
-        return
 
     for iter in range(1,opt.iters+1):
         exps = [exp.strip() for exp in opt.exps.split(",")]
         for exp in exps:
-            if opt.system == "mongodb":
-                DB = MongoDB(opt=opt,trial=iter,exp=exp)
-            elif opt.system == "rethinkdb":
-                DB = RethinkDB(opt=opt,trial=iter,exp=exp)
-            elif opt.system == "tidb":
-                DB = TiDB(opt=opt,trial=iter,exp=exp)
-            elif opt.system == "copilot":
-                DB = Copilot(opt=opt,trial=iter,exp=exp)
+            if opt.system == "eraftdb":
+                DB = ERaftDB(opt=opt, trial=iter, exp=exp)
             DB.run()
             sleep 30
 

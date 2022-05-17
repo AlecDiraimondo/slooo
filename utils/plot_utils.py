@@ -25,36 +25,39 @@ exp = {"noslow":noslow,
     "exp6": exp6
     }
 
-noslow_swapoff = "mongodb_noslow_swapoff_hdd_250_results"
+noslow_swapoff = "eraftdb_follower_swapoff_disk_250_results"
 follower_swapooff = "mongodb_leader_swapoff_hdd_250_results"
 follower_swapon = "mongodb_leader_swapon_hdd_250_results"
 
 # noslow = "noslow"
 # slow = "slow"
 
-for dir in ["/home/varshith/uiuc/res/lea13jul/"]:
+for dir in ["/home/smooth/uiuc/raft_project/fork/eraft/slooo/results/"]:
+    #create list of folders here
     for folder in [noslow_swapoff, follower_swapooff, follower_swapon]:
-    # for folder in [noslow, slow]:
         for file in os.listdir(os.path.join(dir,folder)):
             if "(" in file or os.path.isdir(os.path.join(dir,folder,file)):
                 continue
             if folder == noslow_swapoff:
                 exp_no = "noslow"
             else:
-                exp_no = file.split("_")[0]
+                exp_no = file.split("_")[1] #strip eraft_client num
 
             trial_no = int(file.strip(".txt").split("_")[-1])
+            #client_no = int(file.strip(".txt").split("_")[])
             print(exp_no, trial_no)
             with open(os.path.join(dir, folder, file)) as f:
+                #accumulate
                 for line in f.readlines():
-                    if "Throughput(ops/sec)" in line:
-                        exp[exp_no]["tput"].append(float(line.split(" ")[2]))
-                    elif "[UPDATE], 99thPercentileLatency(us)" in line:
-                        exp[exp_no]["p99"].append(float(line.split(" ")[2]))
-                    elif "[UPDATE], 99.9PercentileLatency(us)" in line:
-                        exp[exp_no]["p99.9"].append(float(line.split(" ")[2]))
-                    elif "[UPDATE], AverageLatency(us)," in line:
-                        exp[exp_no]["avg"].append(float(line.split(" ")[2]))
+                    if "avg_qps_=" in line:
+                        exp[exp_no]["tput"].append(float(line.split(" ")[1]))
+                    elif "avg_latency_=" in line:
+                        exp[exp_no]["avg"].append(float(line.split(" ")[1]))
+                    elif "99_latency_= " in line:
+                        pass
+                    elif "99.9_latency_=" in line:
+                        pass
+        
 
 
 for e in exp:
@@ -70,27 +73,28 @@ med_p99 = []
 
 for no in exp:
     tput = exp[no]["tput"]
-    p99 = exp[no]["p99"]
-    p99_9 = exp[no]["p99.9"]
+    #p99 = exp[no]["p99"]
+    #p99_9 = exp[no]["p99.9"]
     avg = exp[no]["avg"]
     print(tput)
 
-    mean_tput = mean(tput)
-    mean_p99 = mean(p99)
-    median_tput = median(tput)
-    median_p99 = median(p99)
+    mean_tput = sum(tput)
+    #mean_p99 = mean(p99)
+    #median_tput = media(tput)
+    #median_p99 = median(p99)
 
     mn_tput.append(mean_tput)
-    mn_p99.append(mean_p99)
+    #mn_p99.append(mean_p99)
 
-    med_tput.append(median_tput)
-    med_p99.append(median_p99)
+    #med_tput.append(median_tput)
+    #med_p99.append(median_p99)
 
 
-    print(f"{no} average throughput {mean(tput)}")
-    print(f"{no} median throughput {median(tput)}")
-    print(f"{no} average p99 {mean(p99)}")
-    print(f"{no} median p99 {median(p99)}")
+    print(f"{no} average throughput {sum(tput)}")
+    #print(f"{no} median throughput {median(tput)}")
+    print(f"{no} average throughput {sum(avg)}")
+    #print(f"{no} average p99 {mean(p99)}")
+    #print(f"{no} median p99 {median(p99)}")
 
 print(dir)
 
@@ -115,65 +119,65 @@ if plot:
     plt.savefig(os.path.join(dir,"mean_throughput.png"))
     plt.show()
 
-    nn = pd.DataFrame(data={'throughput': ["median throughput"], 
-                            'noslow': [med_tput[0]], 
-                            'cpu slow': [med_tput[1]],
-                            'cpu conten.': [med_tput[2]],
-                            'disk slow': [med_tput[3]],
-                            'disk conten.': [med_tput[4]],
-                            'network slow': [med_tput[5]],
-                            'memory conten.': [med_tput[6]],})
+    #nn = pd.DataFrame(data={'throughput': ["median throughput"], 
+    #                        'noslow': [med_tput[0]], 
+    #                       'cpu slow': [med_tput[1]],
+    #                        'cpu conten.': [med_tput[2]],
+    #                       'disk slow': [med_tput[3]],
+    #                       'disk conten.': [med_tput[4]],
+    #                       'network slow': [med_tput[5]],
+    #                       'memory conten.': [med_tput[6]],})
 
-    nn = pd.melt(nn, id_vars = "throughput")
-
-    # print(dfs1)
-
-    sns.catplot(x = 'throughput', y='value', 
-                hue = 'variable',data=nn, 
-                kind='bar')
-
-    plt.savefig(os.path.join(dir,"median_throughput.png"))
-    plt.show()
-
-    nn = pd.DataFrame(data={'p99': ["mean p99"], 
-                            'noslow': [mn_p99[0]], 
-                            'cpu slow': [mn_p99[1]],
-                            'cpu conten.': [mn_p99[2]],
-                            'disk slow': [mn_p99[3]],
-                            'disk conten.': [mn_p99[4]],
-                            'network slow': [mn_p99[5]],
-                            'memory conten.': [mn_p99[6]],})
-
-    nn = pd.melt(nn, id_vars = "p99")
+    #nn = pd.melt(nn, id_vars = "throughput")
 
     # print(dfs1)
 
-    sns.catplot(x = 'p99', y='value', 
-                hue = 'variable',data=nn, 
-                kind='bar')
+    #sns.catplot(x = 'throughput', y='value', 
+    #           hue = 'variable',data=nn, 
+    #           kind='bar')
 
-    plt.savefig(os.path.join(dir,"mean_p99.png"))
-    plt.show()
+    #plt.savefig(os.path.join(dir,"median_throughput.png"))
+    #plt.show()
 
-    nn = pd.DataFrame(data={'p99': ["median p99"], 
-                            'noslow': [med_p99[0]], 
-                            'cpu slow': [med_p99[1]],
-                            'cpu conten.': [med_p99[2]],
-                            'disk slow': [med_p99[3]],
-                            'disk conten.': [med_p99[4]],
-                            'network slow': [med_p99[5]],
-                            'memory conten.': [med_p99[6]],})
+    #nn = pd.DataFrame(data={'p99': ["mean p99"], 
+    #                        'noslow': [mn_p99[0]], 
+    #                        'cpu slow': [mn_p99[1]],
+    #                        'cpu conten.': [mn_p99[2]],
+    #                        'disk slow': [mn_p99[3]],
+    #                        'disk conten.': [mn_p99[4]],
+    #                        'network slow': [mn_p99[5]],
+    #                        'memory conten.': [mn_p99[6]],})
 
-    nn = pd.melt(nn, id_vars = "p99")
+    #nn = pd.melt(nn, id_vars = "p99")
 
     # print(dfs1)
 
-    sns.catplot(x = 'p99', y='value', 
-                hue = 'variable',data=nn, 
-                kind='bar')
+    #sns.catplot(x = 'p99', y='value', 
+    #            hue = 'variable',data=nn, 
+    #            kind='bar')
 
-    plt.savefig(os.path.join(dir,"median_p99.png"))
-    plt.show()
+    #plt.savefig(os.path.join(dir,"mean_p99.png"))
+    #plt.show()
+
+    #nn = pd.DataFrame(data={'p99': ["median p99"], 
+    #                        'noslow': [med_p99[0]], 
+    #                        'cpu slow': [med_p99[1]],
+    #                        'cpu conten.': [med_p99[2]],
+    #                        'disk slow': [med_p99[3]],
+    #                        'disk conten.': [med_p99[4]],
+    #                        'network slow': [med_p99[5]],
+    #                        'memory conten.': [med_p99[6]],})
+
+    #nn = pd.melt(nn, id_vars = "p99")
+
+    # print(dfs1)
+
+    #sns.catplot(x = 'p99', y='value', 
+    #            hue = 'variable',data=nn, 
+    #            kind='bar')
+
+    #plt.savefig(os.path.join(dir,"median_p99.png"))
+    #plt.show()
 
 normalise = True
 
